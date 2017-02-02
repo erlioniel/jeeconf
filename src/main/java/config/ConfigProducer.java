@@ -47,8 +47,12 @@ public class ConfigProducer {
 		converters.put(float.class, Float::new);
 	}
 
+	private final ConfigSource source;
+
 	@Inject
-	private ConfigSource source;
+	public ConfigProducer(ConfigSource source) {
+		this.source = source;
+	}
 
 	@Produces
 	@Default
@@ -99,7 +103,7 @@ public class ConfigProducer {
 			supplier = () -> converter.apply(rawValue);
 		} else if (targetClass.getAnnotation(ConfigMapping.class) != null) {
 			if(!source.isRootExists(key)) {
-				log.warn("Child node for configuration {} and key '' not found!", instance, key);
+				log.warn("Child node for configuration {} and key '{}' not found!", instance, key);
 				return;
 			}
 			String innerKey = key + ".";

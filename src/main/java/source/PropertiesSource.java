@@ -28,6 +28,7 @@ public class PropertiesSource implements ConfigSource {
 		}
 	}
 
+	@Override
 	public String get(String key) {
 		return properties.getProperty(key);
 	}
