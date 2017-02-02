@@ -1,11 +1,15 @@
 package config;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.enterprise.inject.Default;
 import javax.enterprise.inject.Produces;
 import javax.enterprise.inject.spi.InjectionPoint;
 import javax.inject.Inject;
-import java.lang.annotation.Annotation;
+import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Field;
+import java.lang.reflect.Member;
 import java.lang.reflect.ParameterizedType;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -17,8 +21,7 @@ import java.util.function.Function;
  */
 public class ConfigProducer {
 
-	@Inject
-	private ConfigSource source;
+	private static final Logger log = LoggerFactory.getLogger(ConfigProducer.class);
 
 	private static HashMap<Class<?>, Function<String, ?>> converters;
 	static {
@@ -42,6 +45,9 @@ public class ConfigProducer {
 		converters.put(float.class, Float::new);
 	}
 
+	@Inject
+	private ConfigSource source;
+
 	@Produces
 	@Default
 	public <T> Config<T> produce(InjectionPoint ip) throws IllegalAccessException, InstantiationException {
@@ -51,13 +57,19 @@ public class ConfigProducer {
 
 		// Class prefix
 		ConfigMapping classMapping = (ConfigMapping) targetType.getAnnotation(ConfigMapping.class);
-		String classPrefix = classMapping != null ? classMapping.value() + "." : "";
+		String prefix = classMapping != null && !classMapping.value().isEmpty() ? classMapping.value() + "." : "";
 
-		// ToDo override with field prefix if exists
+		Member member = ip.getMember();
+		if(member instanceof AnnotatedElement) {
+			AnnotatedElement annotated = (AnnotatedElement) member;
+			ConfigMapping memberMapping = annotated.getAnnotation(ConfigMapping.class);
+			prefix = memberMapping != null && !memberMapping.value().isEmpty() ? memberMapping.value() + "." : prefix;
+		}
 
+		String finalPrefix = prefix;
 		Arrays.stream(targetType.getDeclaredFields())
 			.filter(f -> f.getAnnotation(ConfigMapping.class) != null)
-			.forEach(f -> set(f, instance, classPrefix));
+			.forEach(f -> set(f, instance, finalPrefix));
 
 		//noinspection unchecked
 		return new Config<>((T) instance);
@@ -65,16 +77,24 @@ public class ConfigProducer {
 
 	private void set(Field field, Object instance, String prefix) {
 		String key = prefix + field.getAnnotation(ConfigMapping.class).value();
+		String rawValue = source.get(key);
+		if(rawValue == null) {
+			log.warn("Value for configuration {} and key {} not found!", instance, key);
+			return;
+		}
+
 		Class<?> targetClass = field.getType();
+		Function<String, ?> converter = converters.get(targetClass);
+		if(converter == null) {
+			log.warn("Value converter for type {} in configuration not found!", targetClass, instance);
+			return;
+		}
+
 		try {
-			if(converters.containsKey(targetClass)) {
-				Function<String, ?> converter = converters.get(targetClass);
-				String rawValue = source.get(key);
-				field.setAccessible(true);
-				field.set(instance, converter.apply(rawValue));
-			}
+			field.setAccessible(true);
+			field.set(instance, converter.apply(rawValue));
 		} catch (IllegalAccessException e) {
-			e.printStackTrace();
+			log.error("Illegal access exception in configuration {}", instance);
 		}
 	}
 }

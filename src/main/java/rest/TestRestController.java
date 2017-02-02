@@ -1,6 +1,7 @@
 package rest;
 
 import config.Config;
+import config.ConfigMapping;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -19,13 +20,18 @@ import java.util.List;
 public class TestRestController {
 
 	@Inject
-	private Config<TestEntity> config;
+	@ConfigMapping("some.another")
+	private Config<TestEntity> configB;
+
+	@Inject
+	private Config<TestEntity> configA;
 
 	@GET
 	@Path("/")
 	public List<TestEntity> fetchAll() {
 		List<TestEntity> list = new ArrayList<>();
-		list.add(config.get());
+		list.add(configA.get());
+		list.add(configB.get());
 		return list;
 	}
 }
