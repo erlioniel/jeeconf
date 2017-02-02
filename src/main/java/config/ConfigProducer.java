@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.enterprise.inject.Default;
+import javax.enterprise.inject.InjectionException;
 import javax.enterprise.inject.Produces;
 import javax.enterprise.inject.spi.InjectionPoint;
 import javax.inject.Inject;
@@ -14,6 +15,7 @@ import java.lang.reflect.ParameterizedType;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * © 2017 weld-boot
@@ -50,10 +52,9 @@ public class ConfigProducer {
 
 	@Produces
 	@Default
-	public <T> Config<T> produce(InjectionPoint ip) throws IllegalAccessException, InstantiationException {
+	public <T> Config<T> produce(InjectionPoint ip) {
 		ParameterizedType type = (ParameterizedType) ip.getType();
 		Class targetType = (Class) type.getActualTypeArguments()[0];
-		Object instance = targetType.newInstance();
 
 		// Class prefix
 		ConfigMapping classMapping = (ConfigMapping) targetType.getAnnotation(ConfigMapping.class);
@@ -66,33 +67,53 @@ public class ConfigProducer {
 			prefix = memberMapping != null && !memberMapping.value().isEmpty() ? memberMapping.value() + "." : prefix;
 		}
 
-		String finalPrefix = prefix;
-		Arrays.stream(targetType.getDeclaredFields())
-			.filter(f -> f.getAnnotation(ConfigMapping.class) != null)
-			.forEach(f -> set(f, instance, finalPrefix));
+		return new Config<>(createInstance(targetType, prefix));
+	}
 
-		//noinspection unchecked
-		return new Config<>((T) instance);
+	private <T> T createInstance(Class targetType, String prefix) {
+		try {
+			Object instance = targetType.newInstance();
+			Arrays.stream(targetType.getDeclaredFields())
+				.filter(f -> f.getAnnotation(ConfigMapping.class) != null)
+				.forEach(f -> set(f, instance, prefix));
+
+			//noinspection unchecked
+			return (T) instance;
+		} catch (InstantiationException | IllegalAccessException e) {
+			throw new InjectionException("Error in creating instance for configuration " + targetType, e);
+		}
 	}
 
 	private void set(Field field, Object instance, String prefix) {
 		String key = prefix + field.getAnnotation(ConfigMapping.class).value();
-		String rawValue = source.get(key);
-		if(rawValue == null) {
-			log.warn("Value for configuration {} and key {} not found!", instance, key);
-			return;
+		Class<?> targetClass = field.getType();
+		Supplier<?> supplier = null;
+		if(converters.containsKey(targetClass)) {
+			if(!source.isExists(key)) {
+				log.warn("Value for configuration {} and key '{}' not found!", instance, key);
+				return;
+			}
+
+			String rawValue = source.get(key);
+			Function<String, ?> converter = converters.get(targetClass);
+			supplier = () -> converter.apply(rawValue);
+		} else if (targetClass.getAnnotation(ConfigMapping.class) != null) {
+			if(!source.isRootExists(key)) {
+				log.warn("Child node for configuration {} and key '' not found!", instance, key);
+				return;
+			}
+			String innerKey = key + ".";
+			supplier = () -> createInstance(targetClass, innerKey);
 		}
 
-		Class<?> targetClass = field.getType();
-		Function<String, ?> converter = converters.get(targetClass);
-		if(converter == null) {
-			log.warn("Value converter for type {} in configuration not found!", targetClass, instance);
+		if(supplier == null) {
+			log.warn("Supplier for type {} in configuration not found!", targetClass, instance);
 			return;
 		}
 
 		try {
 			field.setAccessible(true);
-			field.set(instance, converter.apply(rawValue));
+			field.set(instance, supplier.get());
 		} catch (IllegalAccessException e) {
 			log.error("Illegal access exception in configuration {}", instance);
 		}

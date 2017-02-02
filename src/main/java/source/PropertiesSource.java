@@ -31,4 +31,15 @@ public class PropertiesSource implements ConfigSource {
 	public String get(String key) {
 		return properties.getProperty(key);
 	}
+
+	@Override
+	public boolean isExists(String key) {
+		return properties.containsKey(key);
+	}
+
+	@Override
+	public boolean isRootExists(String key) {
+		return properties.keySet().stream()
+			.anyMatch(k -> ((String) k).startsWith(key));
+	}
 }

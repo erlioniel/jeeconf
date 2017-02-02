@@ -6,4 +6,6 @@ package config;
  */
 public interface ConfigSource {
 	String get(String key);
+	boolean isExists(String key);
+	boolean isRootExists(String key);
 }

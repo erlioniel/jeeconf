@@ -15,6 +15,9 @@ public class TestEntity {
 	@ConfigMapping("of")
 	private String of;
 
+	@ConfigMapping("in")
+	private TestEntity testEntity;
+
 	public int getValue() {
 		return value;
 	}
@@ -29,5 +32,13 @@ public class TestEntity {
 
 	public void setOf(String of) {
 		this.of = of;
+	}
+
+	public TestEntity getTestEntity() {
+		return testEntity;
+	}
+
+	public void setTestEntity(TestEntity testEntity) {
+		this.testEntity = testEntity;
 	}
 }
