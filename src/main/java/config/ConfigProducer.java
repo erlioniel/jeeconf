@@ -26,6 +26,7 @@ public class ConfigProducer {
 	private static final Logger log = LoggerFactory.getLogger(ConfigProducer.class);
 
 	private static HashMap<Class<?>, Function<String, ?>> converters;
+
 	static {
 		converters = new HashMap<>();
 		converters.put(String.class, t -> t);
@@ -61,17 +62,26 @@ public class ConfigProducer {
 		Class targetType = (Class) type.getActualTypeArguments()[0];
 
 		// Class prefix
-		ConfigMapping classMapping = (ConfigMapping) targetType.getAnnotation(ConfigMapping.class);
-		String prefix = classMapping != null && !classMapping.value().isEmpty() ? classMapping.value() + "." : "";
-
-		Member member = ip.getMember();
-		if(member instanceof AnnotatedElement) {
-			AnnotatedElement annotated = (AnnotatedElement) member;
-			ConfigMapping memberMapping = annotated.getAnnotation(ConfigMapping.class);
-			prefix = memberMapping != null && !memberMapping.value().isEmpty() ? memberMapping.value() + "." : prefix;
-		}
+		String injectionPrefix = getAnnotationKey(ip.getMember());
+		String prefix = injectionPrefix != null
+			? injectionPrefix
+			: getAnnotationKey(targetType);
 
 		return new Config<>(createInstance(targetType, prefix));
+	}
+
+	private String getAnnotationKey(Member member) {
+		if (member instanceof AnnotatedElement) {
+			return getAnnotationKey((AnnotatedElement) member);
+		}
+		return null;
+	}
+
+	private String getAnnotationKey(AnnotatedElement element) {
+		ConfigMapping annotation = element.getAnnotation(ConfigMapping.class);
+		return annotation != null && !annotation.value().isEmpty()
+			? annotation.value()
+			: null;
 	}
 
 	private <T> T createInstance(Class targetType, String prefix) {
@@ -89,11 +99,11 @@ public class ConfigProducer {
 	}
 
 	private void set(Field field, Object instance, String prefix) {
-		String key = prefix + field.getAnnotation(ConfigMapping.class).value();
+		String key = (prefix != null ? prefix + "." : "") + getAnnotationKey((AnnotatedElement) field);
 		Class<?> targetClass = field.getType();
 		Supplier<?> supplier = null;
-		if(converters.containsKey(targetClass)) {
-			if(!source.isExists(key)) {
+		if (converters.containsKey(targetClass)) {
+			if (!source.isExists(key)) {
 				log.warn("Value for configuration {} and key '{}' not found!", instance, key);
 				return;
 			}
@@ -102,15 +112,14 @@ public class ConfigProducer {
 			Function<String, ?> converter = converters.get(targetClass);
 			supplier = () -> converter.apply(rawValue);
 		} else if (targetClass.getAnnotation(ConfigMapping.class) != null) {
-			if(!source.isRootExists(key)) {
+			if (!source.isRootExists(key)) {
 				log.warn("Child node for configuration {} and key '{}' not found!", instance, key);
 				return;
 			}
-			String innerKey = key + ".";
-			supplier = () -> createInstance(targetClass, innerKey);
+			supplier = () -> createInstance(targetClass, key);
 		}
 
-		if(supplier == null) {
+		if (supplier == null) {
 			log.warn("Supplier for type {} in configuration not found!", targetClass, instance);
 			return;
 		}
