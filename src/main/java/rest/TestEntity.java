@@ -6,7 +6,7 @@ import config.ConfigMapping;
  * © 2017 weld-boot
  * Created by Vladimir Kryukov on 02.02.2017
  */
-@ConfigMapping("qqq")
+@ConfigMapping("some.kind")
 public class TestEntity {
 
 	@ConfigMapping("value")
@@ -14,11 +14,6 @@ public class TestEntity {
 
 	@ConfigMapping("of")
 	private String of;
-
-	public TestEntity(String of, int value) {
-		this.value = value;
-		this.of = of;
-	}
 
 	public int getValue() {
 		return value;
