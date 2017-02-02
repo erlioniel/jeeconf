@@ -1,0 +1,12 @@
+tomcat.*
+*.log
+
+# Eclipes files
+.settings
+.classpath
+.project
+target/
+
+# IntelliJ Idea project files
+.idea
+*.iml
