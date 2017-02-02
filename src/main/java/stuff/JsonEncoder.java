@@ -1,4 +1,4 @@
-package websocket;
+package stuff;
 import java.io.IOException;
 import java.io.Writer;
 

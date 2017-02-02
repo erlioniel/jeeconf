@@ -1,4 +1,6 @@
-package resource;
+package rest;
+
+import config.Config;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -14,15 +16,15 @@ import java.util.List;
 @Path("/")
 @Produces(MediaType.APPLICATION_JSON + "; charset=UTF-8")
 @RequestScoped
-public class Resource {
+public class TestRestController {
 
 	@Inject
-	private Configuration<ConfigurationEntity> config;
+	private Config<TestEntity> config;
 
 	@GET
 	@Path("/")
-	public List<ConfigurationEntity> fetchAll() {
-		List<ConfigurationEntity> list = new ArrayList<>();
+	public List<TestEntity> fetchAll() {
+		List<TestEntity> list = new ArrayList<>();
 		list.add(config.get());
 		return list;
 	}

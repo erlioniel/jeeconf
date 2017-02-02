@@ -1,4 +1,4 @@
-package resource;
+package config;
 
 import javax.enterprise.inject.Alternative;
 
@@ -7,14 +7,14 @@ import javax.enterprise.inject.Alternative;
  * Created by Vladimir Kryukov on 02.02.2017
  */
 @Alternative
-public class Configuration<T> {
+public class Config<T> {
 
 	private T entity;
 
-	public Configuration() {
+	public Config() {
 	}
 
-	public Configuration(T entity) {
+	public Config(T entity) {
 		this.entity = entity;
 	}
 

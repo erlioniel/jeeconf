@@ -1,19 +1,21 @@
-package resource;
+package rest;
+
+import config.ConfigMapping;
 
 /**
  * © 2017 weld-boot
  * Created by Vladimir Kryukov on 02.02.2017
  */
-@ConfigurationMapping("qqq")
-public class ConfigurationEntity {
+@ConfigMapping("qqq")
+public class TestEntity {
 
-	@ConfigurationMapping("value")
+	@ConfigMapping("value")
 	private int value;
 
-	@ConfigurationMapping("of")
+	@ConfigMapping("of")
 	private String of;
 
-	public ConfigurationEntity(String of, int value) {
+	public TestEntity(String of, int value) {
 		this.value = value;
 		this.of = of;
 	}

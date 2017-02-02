@@ -153,7 +153,7 @@
 					<assembleDirectory>target</assembleDirectory>
 					<programs>
 						<program>
-							<mainClass>launch.Main</mainClass>
+							<mainClass>Main</mainClass>
 							<jvmSettings>
 								<initialMemorySize>256m</initialMemorySize>
 								<maxMemorySize>1024m</maxMemorySize>
