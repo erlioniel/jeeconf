@@ -12,6 +12,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Named("Bean Resource")
 @Path("/")
@@ -29,6 +30,12 @@ public class TestRestController {
 	@Inject
 	@ConfigMapping("random.key")
 	private String test;
+
+	// ToDo Collections / Maps
+	// ToDo Enum
+
+	@Inject
+	private Map<String, TestEntity> configMap;
 
 	@Inject
 	@ConfigMapping(value = "random.value", required = false)
