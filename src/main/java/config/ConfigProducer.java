@@ -3,6 +3,7 @@ package config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import javax.enterprise.inject.Default;
 import javax.enterprise.inject.InjectionException;
 import javax.enterprise.inject.Produces;
@@ -63,11 +64,7 @@ public class ConfigProducer {
         Class targetType = (Class) type.getActualTypeArguments()[0];
 
         // Class prefix
-        String injectionPrefix = getAnnotationKey(ip.getMember());
-        String prefix = injectionPrefix != null
-                ? injectionPrefix
-                : getAnnotationKey(targetType);
-
+        String prefix = getAnnotationKey(ip.getMember(), targetType);
         return new Config<>(createInstance(targetType, prefix));
     }
 
@@ -126,19 +123,35 @@ public class ConfigProducer {
     }
 
     private String getAnnotationKey(Member member) {
+        return getAnnotationKey(member, null);
+    }
+
+    private String getAnnotationKey(Member member, @Nullable AnnotatedElement target) {
         if (member instanceof AnnotatedElement) {
-            return getAnnotationKey((AnnotatedElement) member);
+            return getAnnotationKey((AnnotatedElement) member, target);
         }
         return null;
     }
 
-    private String getAnnotationKey(AnnotatedElement element) {
+    private String getAnnotationKey(AnnotatedElement element, @Nullable AnnotatedElement target) {
+        // Use element annotation as primary
         ConfigMapping annotation = element.getAnnotation(ConfigMapping.class);
         String key = annotation != null && !annotation.value().isEmpty()
                 ? annotation.value()
                 : null;
-        if (key == null && element instanceof Field) {
-            key = ((Field) element).getName();
+        if(key == null) {
+            // Use target annotation as secondary
+            if(target != null) {
+                annotation = target.getAnnotation(ConfigMapping.class);
+                key = annotation != null && !annotation.value().isEmpty()
+                        ? annotation.value()
+                        : null;
+            }
+
+            // If nothing is found - use field name
+            if (key == null && element instanceof Field) {
+                key = ((Field) element).getName();
+            }
         }
         return key;
     }
@@ -158,21 +171,17 @@ public class ConfigProducer {
     }
 
     private void set(Field field, Object instance, String prefix) {
-        String key = (prefix != null ? prefix + "." : "") + getAnnotationKey((AnnotatedElement) field);
         Class<?> targetClass = field.getType();
-        Supplier<?> supplier = null;
+        String key = (prefix != null ? prefix + "." : "") + getAnnotationKey((AnnotatedElement) field, targetClass);
+
+        Supplier<?> supplier;
         if (converters.containsKey(targetClass)) {
             supplier = () -> getValue(targetClass, key);
-        } else if (targetClass.getAnnotation(ConfigMapping.class) != null) {
+        } else {
             if (!source.isRootExists(key)) {
                 throw new InjectionException("Child node key '" + key + "' not found!");
             }
             supplier = () -> createInstance(targetClass, key);
-        }
-
-        if (supplier == null) {
-            log.warn("Supplier for type {} in configuration not found!", targetClass, instance);
-            return;
         }
 
         try {

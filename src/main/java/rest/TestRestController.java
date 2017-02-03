@@ -24,7 +24,6 @@ public class TestRestController {
 	private Config<TestEntity> configB;
 
 	@Inject
-	@ConfigMapping("some.kind")
 	private Config<TestEntity> configA;
 
 	@Inject
