@@ -24,7 +24,12 @@ public class TestRestController {
 	private Config<TestEntity> configB;
 
 	@Inject
+	@ConfigMapping("some.kind")
 	private Config<TestEntity> configA;
+
+	@Inject
+	@ConfigMapping("random.key")
+	private String test;
 
 	@GET
 	@Path("/")
@@ -32,6 +37,10 @@ public class TestRestController {
 		List<TestEntity> list = new ArrayList<>();
 		list.add(configA.get());
 		list.add(configB.get());
+
+		TestEntity t = new TestEntity();
+		t.setOf(test);
+		list.add(t);
 		return list;
 	}
 }

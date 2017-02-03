@@ -2,6 +2,8 @@ package rest;
 
 import config.ConfigMapping;
 
+import javax.annotation.Nullable;
+
 /**
  * © 2017 weld-boot
  * Created by Vladimir Kryukov on 02.02.2017
@@ -9,14 +11,15 @@ import config.ConfigMapping;
 @ConfigMapping("some.kind")
 public class TestEntity {
 
-	@ConfigMapping("value")
+	@ConfigMapping
 	private int value;
 
-	@ConfigMapping("of")
+	@ConfigMapping
 	private String of;
 
 	@ConfigMapping("in")
-	private TestEntity testEntity;
+	@Nullable
+	private InnerTestEntity testEntity;
 
 	public int getValue() {
 		return value;
@@ -34,11 +37,38 @@ public class TestEntity {
 		this.of = of;
 	}
 
-	public TestEntity getTestEntity() {
+	@Nullable
+	public InnerTestEntity getTestEntity() {
 		return testEntity;
 	}
 
-	public void setTestEntity(TestEntity testEntity) {
+	public void setTestEntity(@Nullable InnerTestEntity testEntity) {
 		this.testEntity = testEntity;
+	}
+
+	@ConfigMapping
+	public static class InnerTestEntity {
+
+		@ConfigMapping
+		private boolean debug;
+
+		@ConfigMapping
+		private String value;
+
+		public boolean isDebug() {
+			return debug;
+		}
+
+		public void setDebug(boolean debug) {
+			this.debug = debug;
+		}
+
+		public String getValue() {
+			return value;
+		}
+
+		public void setValue(String value) {
+			this.value = value;
+		}
 	}
 }
