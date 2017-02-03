@@ -17,4 +17,5 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Target({TYPE, FIELD, METHOD})
 public @interface ConfigMapping {
     @Nonbinding String value() default "";
+    @Nonbinding boolean required() default true;
 }

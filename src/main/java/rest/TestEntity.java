@@ -17,8 +17,7 @@ public class TestEntity {
 	@ConfigMapping
 	private String of;
 
-	@ConfigMapping("in")
-	@Nullable
+	@ConfigMapping(value = "in", required = false)
 	private InnerTestEntity testEntity;
 
 	public int getValue() {

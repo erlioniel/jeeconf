@@ -12,35 +12,31 @@ import java.util.Properties;
  */
 public class PropertiesSource implements ConfigSource {
 
-	private final Properties properties;
+    private final Properties properties;
 
-	public PropertiesSource() {
-		final InputStream stream = PropertiesSource.class
-			.getClassLoader().getResourceAsStream("config.properties");
-		if (stream == null) {
-			throw new RuntimeException("No properties!!!");
-		}
-		try {
-			this.properties = new Properties();
-			this.properties.load(stream);
-		} catch (final IOException e) {
-			throw new RuntimeException("Configuration could not be loaded!");
-		}
-	}
+    public PropertiesSource() {
+        final InputStream stream = PropertiesSource.class
+                .getClassLoader().getResourceAsStream("config.properties");
+        if (stream == null) {
+            throw new RuntimeException("No properties!!!");
+        }
+        try {
+            this.properties = new Properties();
+            this.properties.load(stream);
+        } catch (final IOException e) {
+            throw new RuntimeException("Configuration could not be loaded!");
+        }
+    }
 
-	@Override
-	public String get(String key) {
-		return properties.getProperty(key);
-	}
+    @Override
+    public String get(String key) {
+        return properties.getProperty(key);
+    }
 
-	@Override
-	public boolean isExists(String key) {
-		return properties.containsKey(key);
-	}
-
-	@Override
-	public boolean isRootExists(String key) {
-		return properties.keySet().stream()
-			.anyMatch(k -> ((String) k).startsWith(key));
-	}
+    @Override
+    public boolean isExists(String key) {
+        return properties.containsKey(key)
+                || properties.keySet().stream()
+                .anyMatch(k -> ((String) k).startsWith(key));
+    }
 }

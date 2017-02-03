@@ -30,6 +30,10 @@ public class TestRestController {
 	@ConfigMapping("random.key")
 	private String test;
 
+	@Inject
+	@ConfigMapping(value = "random.value", required = false)
+	private int x;
+
 	@GET
 	@Path("/")
 	public List<TestEntity> fetchAll() {
@@ -39,6 +43,7 @@ public class TestRestController {
 
 		TestEntity t = new TestEntity();
 		t.setOf(test);
+		t.setValue(x);
 		list.add(t);
 		return list;
 	}

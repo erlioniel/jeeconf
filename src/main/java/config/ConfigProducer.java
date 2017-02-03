@@ -72,49 +72,57 @@ public class ConfigProducer {
     @ConfigMapping
     public String produceString(InjectionPoint ip) {
         String key = getAnnotationKey(ip.getMember());
-        return getValue(String.class, key);
+        return isExists(key, ip.getMember())
+                ? getValue(String.class, key)
+                : null;
     }
 
     @Produces
     @ConfigMapping
     public Integer produceInteger(InjectionPoint ip) {
         String key = getAnnotationKey(ip.getMember());
-        return getValue(Integer.class, key);
+        return isExists(key, ip.getMember())
+                ? getValue(Integer.class, key)
+                : null;
     }
 
     @Produces
     @ConfigMapping
     public Short produceShort(InjectionPoint ip) {
         String key = getAnnotationKey(ip.getMember());
-        return getValue(Short.class, key);
+        return isExists(key, ip.getMember())
+                ? getValue(Short.class, key)
+                : null;
     }
 
     @Produces
     @ConfigMapping
     public Double produceDouble(InjectionPoint ip) {
         String key = getAnnotationKey(ip.getMember());
-        return getValue(Double.class, key);
+        return isExists(key, ip.getMember())
+                ? getValue(Double.class, key)
+                : null;
     }
 
     @Produces
     @ConfigMapping
     public Float produceFloat(InjectionPoint ip) {
         String key = getAnnotationKey(ip.getMember());
-        return getValue(Float.class, key);
+        return isExists(key, ip.getMember())
+                ? getValue(Float.class, key)
+                : null;
     }
 
     @Produces
     @ConfigMapping
     public Boolean produceBoolean(InjectionPoint ip) {
         String key = getAnnotationKey(ip.getMember());
-        return getValue(Boolean.class, key);
+        return isExists(key, ip.getMember())
+                ? getValue(Boolean.class, key)
+                : null;
     }
 
     private <T> T getValue(Class<T> targetClass, String key) {
-        if (!source.isExists(key)) {
-            throw new InjectionException("Value for configuration key '" + key + "' not found!");
-        }
-
         String rawValue = source.get(key);
         Function<String, ?> converter = converters.get(targetClass);
 
@@ -139,9 +147,9 @@ public class ConfigProducer {
         String key = annotation != null && !annotation.value().isEmpty()
                 ? annotation.value()
                 : null;
-        if(key == null) {
+        if (key == null) {
             // Use target annotation as secondary
-            if(target != null) {
+            if (target != null) {
                 annotation = target.getAnnotation(ConfigMapping.class);
                 key = annotation != null && !annotation.value().isEmpty()
                         ? annotation.value()
@@ -174,13 +182,14 @@ public class ConfigProducer {
         Class<?> targetClass = field.getType();
         String key = (prefix != null ? prefix + "." : "") + getAnnotationKey((AnnotatedElement) field, targetClass);
 
+        if (!isExists(key, (AnnotatedElement) field)) {
+            return;
+        }
+
         Supplier<?> supplier;
         if (converters.containsKey(targetClass)) {
             supplier = () -> getValue(targetClass, key);
         } else {
-            if (!source.isRootExists(key)) {
-                throw new InjectionException("Child node key '" + key + "' not found!");
-            }
             supplier = () -> createInstance(targetClass, key);
         }
 
@@ -190,5 +199,24 @@ public class ConfigProducer {
         } catch (IllegalAccessException e) {
             log.error("Illegal access exception in configuration {}", instance, e);
         }
+    }
+
+    private boolean isExists(String key, Member member) {
+        return member instanceof AnnotatedElement
+                ? isExists(key, (AnnotatedElement) member)
+                : source.isExists(key);
+    }
+
+    private boolean isExists(String key, AnnotatedElement target) {
+        if (source.isExists(key)) {
+            return true;
+        }
+
+        if (target.getAnnotation(ConfigMapping.class).required()) {
+            throw new InjectionException("Child node key '" + key + "' not found!");
+        }
+
+        log.warn("Child node key '{}' not found!", key);
+        return false;
     }
 }
