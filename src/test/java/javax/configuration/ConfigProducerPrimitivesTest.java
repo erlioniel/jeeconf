@@ -5,9 +5,10 @@ import org.jglue.cdiunit.CdiRunner;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import javax.configuration.sources.HashMapSource;
+import javax.configuration.adapter.MapSourceAdapter;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
+import java.util.HashMap;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -17,15 +18,16 @@ import static org.junit.Assert.assertTrue;
 public class ConfigProducerPrimitivesTest {
 
 	@Produces
-	private static HashMapSource source;
+	private static ConfigSource source;
 
 	static {
-		source = new HashMapSource();
-		source.put("primitive.string", "Test");
-		source.put("primitive.number", "3");
-		source.put("primitive.double", "3.2");
-		source.put("primitive.boolean", "true");
-		source.put("primitive.char", "c");
+		HashMap<String, String> sourceMap = new HashMap<>();
+		sourceMap.put("primitive.string", "Test");
+		sourceMap.put("primitive.number", "3");
+		sourceMap.put("primitive.double", "3.2");
+		sourceMap.put("primitive.boolean", "true");
+		sourceMap.put("primitive.char", "c");
+		source = new MapSourceAdapter(sourceMap);
 	}
 
 	@Inject

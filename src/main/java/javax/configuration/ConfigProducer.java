@@ -9,12 +9,14 @@ import javax.enterprise.inject.InjectionException;
 import javax.enterprise.inject.Produces;
 import javax.enterprise.inject.spi.InjectionPoint;
 import javax.inject.Inject;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Field;
 import java.lang.reflect.Member;
 import java.lang.reflect.ParameterizedType;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -60,79 +62,62 @@ public class ConfigProducer {
 		Class targetType = (Class) type.getActualTypeArguments()[0];
 
 		// Class prefix
-		String prefix = getAnnotationKey(ip.getMember(), targetType);
+		String prefix = getAnnotationKey(ip.getMember(), targetType, findQualifier(ip.getQualifiers()));
 		return new Config<>(createInstance(targetType, prefix));
 	}
 
 	@Produces
 	@ConfigMapping
 	public String produceString(InjectionPoint ip) {
-		String key = getAnnotationKey(ip.getMember());
-		return isExists(key, ip.getMember())
-			? getValue(String.class, key)
-			: null;
+		return produceT(String.class, ip);
 	}
 
 	@Produces
 	@ConfigMapping
 	public Integer produceInteger(InjectionPoint ip) {
-		String key = getAnnotationKey(ip.getMember());
-		return isExists(key, ip.getMember())
-			? getValue(Integer.class, key)
-			: null;
+		return produceT(Integer.class, ip);
 	}
 
 	@Produces
 	@ConfigMapping
 	public Long produceLong(InjectionPoint ip) {
-		String key = getAnnotationKey(ip.getMember());
-		return isExists(key, ip.getMember())
-			? getValue(Long.class, key)
-			: null;
+		return produceT(Long.class, ip);
 	}
 
 	@Produces
 	@ConfigMapping
 	public Short produceShort(InjectionPoint ip) {
-		String key = getAnnotationKey(ip.getMember());
-		return isExists(key, ip.getMember())
-			? getValue(Short.class, key)
-			: null;
+		return produceT(Short.class, ip);
 	}
 
 	@Produces
 	@ConfigMapping
 	public Double produceDouble(InjectionPoint ip) {
-		String key = getAnnotationKey(ip.getMember());
-		return isExists(key, ip.getMember())
-			? getValue(Double.class, key)
-			: null;
+		return produceT(Double.class, ip);
 	}
 
 	@Produces
 	@ConfigMapping
 	public Float produceFloat(InjectionPoint ip) {
-		String key = getAnnotationKey(ip.getMember());
-		return isExists(key, ip.getMember())
-			? getValue(Float.class, key)
-			: null;
+		return produceT(Float.class, ip);
 	}
 
 	@Produces
 	@ConfigMapping
 	public Boolean produceBoolean(InjectionPoint ip) {
-		String key = getAnnotationKey(ip.getMember());
-		return isExists(key, ip.getMember())
-			? getValue(Boolean.class, key)
-			: null;
+		return produceT(Boolean.class, ip);
 	}
 
 	@Produces
 	@ConfigMapping
 	public Character produceCharacter(InjectionPoint ip) {
-		String key = getAnnotationKey(ip.getMember());
+		return produceT(Character.class, ip);
+	}
+
+	private <T> T produceT(Class<T> targetClass, InjectionPoint ip) {
+		String key = getAnnotationKey(ip.getMember(), targetClass, findQualifier(ip.getQualifiers()));
 		return isExists(key, ip.getMember())
-			? getValue(Character.class, key)
+			? getValue(targetClass, key)
 			: null;
 	}
 
@@ -144,20 +129,8 @@ public class ConfigProducer {
 		return (T) converter.apply(rawValue);
 	}
 
-	private String getAnnotationKey(Member member) {
-		return getAnnotationKey(member, null);
-	}
-
-	private String getAnnotationKey(Member member, @Nullable AnnotatedElement target) {
-		if (member instanceof AnnotatedElement) {
-			return getAnnotationKey((AnnotatedElement) member, target);
-		}
-		return null;
-	}
-
-	private String getAnnotationKey(AnnotatedElement element, @Nullable AnnotatedElement target) {
+	private String getAnnotationKey(Member member, @Nullable AnnotatedElement target, @Nullable ConfigMapping annotation) {
 		// Use element annotation as primary
-		ConfigMapping annotation = element.getAnnotation(ConfigMapping.class);
 		String key = annotation != null && !annotation.value().isEmpty()
 			? annotation.value()
 			: null;
@@ -171,11 +144,21 @@ public class ConfigProducer {
 			}
 
 			// If nothing is found - use field name
-			if (key == null && element instanceof Field) {
-				key = ((Field) element).getName();
+			if (key == null && member instanceof Field) {
+				key = member.getName();
 			}
 		}
 		return key;
+	}
+
+	@Nullable
+	private ConfigMapping findQualifier(Set<Annotation> qualifiers) {
+		for (Annotation qualifier : qualifiers) {
+			if(qualifier instanceof ConfigMapping) {
+				return (ConfigMapping) qualifier;
+			}
+		}
+		return null;
 	}
 
 	private <T> T createInstance(Class targetType, String prefix) {
@@ -194,7 +177,7 @@ public class ConfigProducer {
 
 	private void set(Field field, Object instance, String prefix) {
 		Class<?> targetClass = field.getType();
-		String key = (prefix != null ? prefix + "." : "") + getAnnotationKey((AnnotatedElement) field, targetClass);
+		String key = (prefix != null ? prefix + "." : "") + getAnnotationKey(field, targetClass, field.getAnnotation(ConfigMapping.class));
 
 		if (!isExists(key, (AnnotatedElement) field)) {
 			return;
@@ -211,14 +194,12 @@ public class ConfigProducer {
 			field.setAccessible(true);
 			field.set(instance, supplier.get());
 		} catch (IllegalAccessException e) {
-			log.error("Illegal access exception in configuration {}", instance, e);
+			throw new InjectionException("Illegal access exception in configuration " + instance, e);
 		}
 	}
 
 	private boolean isExists(String key, Member member) {
-		return member instanceof AnnotatedElement
-			? isExists(key, (AnnotatedElement) member)
-			: source.contains(key);
+		return isExists(key, (AnnotatedElement) member);
 	}
 
 	private boolean isExists(String key, AnnotatedElement target) {

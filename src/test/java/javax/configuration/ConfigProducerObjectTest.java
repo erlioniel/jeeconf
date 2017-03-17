@@ -6,9 +6,10 @@ import org.jglue.cdiunit.CdiRunner;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import javax.configuration.sources.HashMapSource;
+import javax.configuration.adapter.MapSourceAdapter;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
+import java.util.HashMap;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -18,15 +19,16 @@ import static org.junit.Assert.assertNull;
 public class ConfigProducerObjectTest {
 
 	@Produces
-	private static HashMapSource source;
+	private static ConfigSource source;
 
 	static {
-		source = new HashMapSource();
-		source.put("entry.exampleString", "Valid!");
-		source.put("entry.renameExample", "3");
-		source.put("entry.inner.exampleChar", "z");
-		source.put("another.root.exampleString", "AnotherRoot!");
-		source.put("another.root.renameExample", "6");
+		HashMap<String, String> sourceMap = new HashMap<>();
+		sourceMap.put("entry.exampleString", "Valid!");
+		sourceMap.put("entry.renameExample", "3");
+		sourceMap.put("entry.inner.exampleChar", "z");
+		sourceMap.put("another.root.exampleString", "AnotherRoot!");
+		sourceMap.put("another.root.renameExample", "6");
+		source = new MapSourceAdapter(sourceMap);
 	}
 
 	@Inject

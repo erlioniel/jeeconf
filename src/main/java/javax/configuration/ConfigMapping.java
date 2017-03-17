@@ -10,7 +10,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 @Qualifier
 @Retention(RUNTIME)
-@Target({TYPE, FIELD, METHOD})
+@Target({TYPE, FIELD, METHOD, PARAMETER})
 public @interface ConfigMapping {
     @Nonbinding String value() default "";
     @Nonbinding boolean required() default true;

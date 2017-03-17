@@ -1,14 +1,8 @@
 package javax.configuration;
 
-import javax.enterprise.inject.Alternative;
-
-@Alternative
 public class Config<T> {
 
-	private T entity;
-
-	private Config() {
-	}
+	private final T entity;
 
 	public Config(T entity) {
 		this.entity = entity;
@@ -16,9 +10,5 @@ public class Config<T> {
 
 	public T get() {
 		return entity;
-	}
-
-	public void set(T entity) {
-		this.entity = entity;
 	}
 }
