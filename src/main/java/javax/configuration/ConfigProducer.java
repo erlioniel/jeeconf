@@ -16,11 +16,17 @@ import java.lang.reflect.Member;
 import java.lang.reflect.ParameterizedType;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class ConfigProducer {
+
+	// ToDo Wrapper primitive test
+	// ToDo Collections
+	// ToDo Optional test, optional is really optional?
+	// ToDo Enum processing
 
 	private static final Logger log = LoggerFactory.getLogger(ConfigProducer.class);
 
@@ -64,6 +70,13 @@ public class ConfigProducer {
 		// Class prefix
 		String prefix = getAnnotationKey(ip.getMember(), targetType, findQualifier(ip.getQualifiers()));
 		return new Config<>(createInstance(targetType, prefix));
+	}
+
+	@Produces
+	@ConfigMapping
+	public <T> Optional<T> produceOptional(InjectionPoint ip) {
+		//noinspection unchecked
+		return Optional.of((T) produce(ip));
 	}
 
 	@Produces
