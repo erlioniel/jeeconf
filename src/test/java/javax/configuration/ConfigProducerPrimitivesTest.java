@@ -10,6 +10,7 @@ import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 @RunWith(CdiRunner.class)
 @AdditionalClasses(ConfigProducer.class)
@@ -23,7 +24,7 @@ public class ConfigProducerPrimitivesTest {
 		source.put("primitive.string", "Test");
 		source.put("primitive.number", "3");
 		source.put("primitive.double", "3.2");
-		source.put("primitive.boolean", "false");
+		source.put("primitive.boolean", "true");
 		source.put("primitive.char", "c");
 	}
 
@@ -53,7 +54,7 @@ public class ConfigProducerPrimitivesTest {
 
 	@Inject
 	@ConfigMapping("primitive.boolean")
-	private char testBoolean;
+	private boolean testBoolean;
 
 	@Inject
 	@ConfigMapping("primitive.char")
@@ -87,5 +88,15 @@ public class ConfigProducerPrimitivesTest {
 	@Test
 	public void shouldInjectFloat() {
 		assertEquals(3.2F, testFloat, 0);
+	}
+
+	@Test
+	public void shouldInjectBoolean() {
+		assertTrue(testBoolean);
+	}
+
+	@Test
+	public void shouldInjectChar() {
+		assertEquals('c', testChar);
 	}
 }
