@@ -7,7 +7,7 @@ public class Config<T> {
 
 	private T entity;
 
-	public Config() {
+	private Config() {
 	}
 
 	public Config(T entity) {

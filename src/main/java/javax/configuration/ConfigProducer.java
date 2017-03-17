@@ -84,6 +84,15 @@ public class ConfigProducer {
 
 	@Produces
 	@ConfigMapping
+	public Long produceLong(InjectionPoint ip) {
+		String key = getAnnotationKey(ip.getMember());
+		return isExists(key, ip.getMember())
+			? getValue(Long.class, key)
+			: null;
+	}
+
+	@Produces
+	@ConfigMapping
 	public Short produceShort(InjectionPoint ip) {
 		String key = getAnnotationKey(ip.getMember());
 		return isExists(key, ip.getMember())
@@ -115,6 +124,15 @@ public class ConfigProducer {
 		String key = getAnnotationKey(ip.getMember());
 		return isExists(key, ip.getMember())
 			? getValue(Boolean.class, key)
+			: null;
+	}
+
+	@Produces
+	@ConfigMapping
+	public Character produceCharacter(InjectionPoint ip) {
+		String key = getAnnotationKey(ip.getMember());
+		return isExists(key, ip.getMember())
+			? getValue(Character.class, key)
 			: null;
 	}
 
@@ -200,11 +218,11 @@ public class ConfigProducer {
 	private boolean isExists(String key, Member member) {
 		return member instanceof AnnotatedElement
 			? isExists(key, (AnnotatedElement) member)
-			: source.isExists(key);
+			: source.contains(key);
 	}
 
 	private boolean isExists(String key, AnnotatedElement target) {
-		if (source.isExists(key)) {
+		if (source.contains(key)) {
 			return true;
 		}
 
