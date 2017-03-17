@@ -1,13 +1,7 @@
-package rest;
-
-import config.ConfigMapping;
+package javax.configuration;
 
 import javax.annotation.Nullable;
 
-/**
- * © 2017 weld-boot
- * Created by Vladimir Kryukov on 02.02.2017
- */
 @ConfigMapping("some.kind")
 public class TestEntity {
 

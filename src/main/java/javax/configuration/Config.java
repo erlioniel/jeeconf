@@ -1,11 +1,7 @@
-package config;
+package javax.configuration;
 
 import javax.enterprise.inject.Alternative;
 
-/**
- * © 2017 weld-boot
- * Created by Vladimir Kryukov on 02.02.2017
- */
 @Alternative
 public class Config<T> {
 
