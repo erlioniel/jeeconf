@@ -27,6 +27,7 @@ public class ConfigProducer {
 	// ToDo Collections
 	// ToDo Optional test, optional is really optional?
 	// ToDo Enum processing
+	// ToDo Custom converter supports
 
 	private static final Logger log = LoggerFactory.getLogger(ConfigProducer.class);
 
